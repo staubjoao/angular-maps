@@ -1,6 +1,8 @@
-# AngularMaps
+# Integrate Leaflet Maps in Angular 
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 17.0.0.
+<p align="center"><img src="https://github.com/ultimateakash/angular-leaflet-maps/blob/master/src/assets/angular-leaflet-maps.png"></p>
+
+This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 13.3.0.
 
 ## Development server
 

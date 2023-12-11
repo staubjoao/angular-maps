@@ -1,0 +1,21 @@
+.map-container {
+  height: 500px; /* ou qualquer altura desejada */
+}
+
+#map {
+  height: 100%;
+  margin-bottom: 10px; /* Espaço entre o mapa e o botão */
+}
+
+button {
+  padding: 10px;
+  background-color: #3498db;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+button:hover {
+  background-color: #2980b9;
+}
