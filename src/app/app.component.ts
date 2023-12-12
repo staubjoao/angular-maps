@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import * as Leaflet from 'leaflet';
 import 'leaflet-control-geocoder';
 
@@ -12,6 +13,9 @@ export class AppComponent {
   markers: Leaflet.Marker[] = [];
   selectedPoints: Leaflet.LatLng[] = [];
   quarteiraoPolygon: Leaflet.Polygon | undefined;
+  searchControl!: any;
+  searchQuery: string = '';
+  viewBounds: Leaflet.LatLngBounds | undefined;
 
   options = {
     layers: [
@@ -29,6 +33,7 @@ export class AppComponent {
     }
 
     this.selectedPoints = [];
+    this.quarteiraoPolygon = undefined;
   }
 
   salvarSelecao() {
@@ -49,6 +54,14 @@ export class AppComponent {
   onMapReady($event: Leaflet.Map) {
     this.map = $event;
     this.setupMapClickEvent();
+
+    this.viewBounds = this.map.getBounds(); // Obtém a "view box" inicial
+
+    // Adicione um evento de movimento do mapa para atualizar os limites quando o mapa é movido
+    this.map.on('moveend', () => {
+      this.viewBounds = this.map.getBounds();
+      console.log('Novos limites da view box:', this.viewBounds);
+    });
   }
 
   setupMapClickEvent() {
@@ -94,4 +107,71 @@ export class AppComponent {
       );
     });
   }
+
+  searchStreet() {
+    console.log('Pesquisando a rua:', this.searchQuery);
+
+    // Faça a solicitação HTTP para o serviço do Nominatim
+    this.http.get<any>(`https://nominatim.openstreetmap.org/search?format=json&q=${this.searchQuery}`)
+      .subscribe(data => {
+        if (data && data.length > 0) {
+          const result = data[0];
+          const latlng = Leaflet.latLng(result.lat, result.lon);
+
+          // Limpa a camada do polígono anterior, se existir
+          if (this.quarteiraoPolygon) {
+            this.map.removeLayer(this.quarteiraoPolygon);
+          }
+
+          // Adiciona um marcador na localização encontrada
+          const marker = Leaflet.marker(latlng, { draggable: true })
+            .addTo(this.map)
+            .bindPopup(`<b>${latlng.lat}, ${latlng.lng}</b>`);
+
+          // Pan para a nova posição do marcador
+          this.map.panTo(latlng);
+
+          // Armazena o marcador para possível manipulação futura
+          this.markers.push(marker);
+        } else {
+          console.warn('Nenhum resultado encontrado.');
+        }
+      }, error => {
+        console.error('Erro ao realizar a busca:', error);
+      });
+  }
+
+  // setupGeocoderControl() {
+  //   this.searchControl = Leaflet.Control.geocoder({
+  //     position: 'topright',
+  //     geocoder: new Leaflet.Control.Geocoder.Nominatim(),
+  //     collapsed: false,
+  //     placeholder: 'Pesquisar rua...',
+  //     showResultIcons: true,
+  //     defaultMarkGeocode: false
+  //   });
+
+  //   this.searchControl.addTo(this.map);
+
+  //   this.searchControl.on('markgeocode', (e: any) => {
+  //     const latlng = e.geocode.center;
+  //     console.log(`Selecionado: ${latlng.lat}, ${latlng.lng}`);
+
+  //     // Limpa a camada do polígono anterior, se existir
+  //     if (this.quarteiraoPolygon) {
+  //       this.map.removeLayer(this.quarteiraoPolygon);
+  //     }
+
+  //     // Adiciona um marcador na localização selecionada
+  //     const marker = Leaflet.marker(latlng, { draggable: true })
+  //       .addTo(this.map)
+  //       .bindPopup(`<b>${latlng.lat}, ${latlng.lng}</b>`);
+
+  //     // Pan para a nova posição do marcador
+  //     this.map.panTo(latlng);
+
+  //     // Armazena o marcador para possível manipulação futura
+  //     this.markers.push(marker);
+  //   });
+  // }
 }

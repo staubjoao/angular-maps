@@ -1,15 +1,25 @@
 .map-container {
-  height: 500px; /* ou qualquer altura desejada */
+  height: 500px;
 }
 
 #map {
+  display: flex;
+  flex-direction: column;
   height: 100%;
-  margin-bottom: 10px; /* Espaço entre o mapa e o botão */
+  padding: 10px;
+}
+
+input {
+  margin-bottom: 10px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
 }
 
 button {
   padding: 10px;
   background-color: #3498db;
+  margin: 5px;
   color: #fff;
   border: none;
   cursor: pointer;

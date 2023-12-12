@@ -1,14 +1,17 @@
-<h1 class="text-center">Angular Leaftlet Maps</h1>
+<h1 class="text-center">Angular Leaflet Maps</h1>
 
-<div
-  class="map-container"
-  leaflet
-  [leafletOptions]="options"
-  (leafletMapReady)="onMapReady($event)"
-  (leafletClick)="mapClicked($event)"
-></div>
+<input type="text" placeholder="Pesquisar rua" [(ngModel)]="searchQuery" />
+<button (click)="searchStreet()">Pesquisar</button>
 
 <div id="map" style="height: 400px">
-  <button (click)="resetSelection()">Reiniciar Seleção</button>
-  <button (click)="salvarSelecao()">Salvar</button>
+  <div
+    class="map-container"
+    leaflet
+    [leafletOptions]="options"
+    (leafletMapReady)="onMapReady($event)"
+    (leafletClick)="mapClicked($event)"
+  ></div>
 </div>
+
+<button (click)="resetSelection()">Reiniciar Seleção</button>
+<button (click)="salvarSelecao()">Salvar</button>
