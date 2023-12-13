@@ -11,7 +11,7 @@ import 'leaflet-control-geocoder';
 export class AppComponent {
   map!: Leaflet.Map;
   selectedPoints: Leaflet.LatLng[] = [];
-  circles: Leaflet.CircleMarker[] = [];
+  circles: Leaflet.Marker[] = [];
   quarteiraoPolygon: Leaflet.Polygon | undefined;
   searchControl!: any;
   searchQuery: string = '';
@@ -81,17 +81,20 @@ export class AppComponent {
         this.map.removeLayer(this.quarteiraoPolygon);
       }
 
-      // Adiciona um círculo (círculo azul) para cada ponto
-      const circle = Leaflet.circleMarker(latlng, {
-        color: 'blue',
-        fillColor: 'blue',
-        fillOpacity: 0.5,
-        radius: 10,
-        interactive: true
-      }).addTo(this.map);
+      const circle = Leaflet.marker(latlng, {
+        icon: Leaflet.divIcon({
+          className: 'circle-icon',
+          iconSize: [20, 20],
+          html: '<div style="width: 20px; height: 20px; border-radius: 50%; background-color: blue; opacity: 0.5;"></div>',
+        }),
+        draggable: true,
+      });
 
-      circle.on('dragend', (event) => this.circleDragEnd(event));
+      circle.on('drag', (event) => {
+        this.circleDragEnd(event);
+      });
 
+      circle.addTo(this.map);
 
       this.circles.push(circle);
 
@@ -102,8 +105,9 @@ export class AppComponent {
     });
   }
 
-  circleDragEnd(event: any) {
+  circleDragEnd(event: Leaflet.LeafletEvent) {
     this.selectedPoints = this.circles.map(circle => circle.getLatLng());
+
     if (this.quarteiraoPolygon) {
       this.map.removeLayer(this.quarteiraoPolygon);
     }
