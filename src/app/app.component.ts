@@ -31,7 +31,7 @@ export class AppComponent {
     zoom: 16,
     maxZoom: 18,
     minZoom: 14,
-    center: { lat: -23.410618, lng: -51.944181 }
+    // center: { lat: -23.410618, lng: -51.944181 }
   };
 
   resetSelection() {
