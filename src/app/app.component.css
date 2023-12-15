@@ -1,5 +1,6 @@
 .map-container {
-  height: 700px;
+  height: 500px;
+  width: 90%;
 }
 
 #map {
@@ -7,6 +8,11 @@
   flex-direction: column;
   height: 100%;
   padding: 10px;
+}
+
+.buttons-group {
+  text-align: right;
+  margin-right: 5%;
 }
 
 input {

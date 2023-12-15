@@ -4,6 +4,8 @@ import * as Leaflet from 'leaflet';
 import 'leaflet-control-geocoder';
 import 'leaflet-editable';
 
+import { Quarteirao } from './model/quarteirao';
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -11,14 +13,15 @@ import 'leaflet-editable';
 })
 export class AppComponent {
   map!: Leaflet.Map;
-  selectedPoints: Leaflet.LatLng[] = [];
-  circles: Leaflet.Marker[] = [];
-  quarteiraoPolygon: Leaflet.Polygon | undefined;
-  quarteiroesPolygons: Leaflet.Polygon[] = [];
-  searchControl!: any;
-  searchQuery: string = '';
-  viewBounds: Leaflet.LatLngBounds | undefined;
-  mapActivated: boolean = false;
+  pontosSelecionados: Leaflet.LatLng[] = [];
+  circulos: Leaflet.Marker[] = [];
+  quarteiraoPoligono: Leaflet.Polygon | undefined;
+  quarteiroes: Quarteirao[] = [];
+  enderecoPesquisa: string = '';
+  numeroQuarteirao: string = '';
+
+  bordasMapa: Leaflet.LatLngBounds | undefined;
+  mapaAtivado: boolean = false;
   nominatimURL: string = 'https://nominatim.openstreetmap.org/search?format=json&q=';
 
   constructor(private http: HttpClient) {
@@ -36,67 +39,85 @@ export class AppComponent {
     center: { lat: -23.410618, lng: -51.944181 }
   };
 
-  resetSelection() {
-    if (this.quarteiraoPolygon) {
-      this.map.removeLayer(this.quarteiraoPolygon);
+  limparSelecao() {
+    if (this.quarteiraoPoligono) {
+      this.map.removeLayer(this.quarteiraoPoligono);
     }
 
-    this.selectedPoints = [];
-    this.circles.forEach(circle => this.map.removeLayer(circle));
-    this.circles = [];
-    this.quarteiraoPolygon = undefined;
+    this.pontosSelecionados = [];
+    this.circulos.forEach(circle => this.map.removeLayer(circle));
+    this.circulos = [];
+    this.quarteiraoPoligono = undefined;
   }
 
   salvarSelecao() {
-    if (this.quarteiraoPolygon) {
-      this.quarteiraoPolygon.setStyle({ color: 'green', fillColor: 'green' });
-      this.quarteiroesPolygons.push(this.quarteiraoPolygon);
+    if (this.quarteiraoPoligono) {
+      this.quarteiraoPoligono.setStyle({ color: 'green', fillColor: 'green' });
 
-      console.log(typeof (this.quarteiraoPolygon.getLatLngs()));
-      this.quarteiraoPolygon.getLatLngs().forEach(ponto => {
+
+
+      const texto = Leaflet.marker(this.quarteiraoPoligono.getCenter(), {
+        icon: Leaflet.divIcon({
+          className: 'text-box',
+          iconSize: [20, 20],
+          html: '<div><p>' + this.numeroQuarteirao + '</p></div>',
+        }),
+        draggable: true,
+      });
+
+      this.numeroQuarteirao = '';
+
+      texto.addTo(this.map);
+
+      let quarteirao = new Quarteirao(Number(this.numeroQuarteirao), this.quarteiraoPoligono, texto);
+
+      this.quarteiroes.push(quarteirao);
+
+      console.log(typeof (this.quarteiraoPoligono.getLatLngs()));
+      this.quarteiraoPoligono.getLatLngs().forEach(ponto => {
         console.log(ponto.toString());
       });
 
-      this.selectedPoints = [];
-      this.circles.forEach(circle => this.map.removeLayer(circle));
-      this.circles = [];
-      this.quarteiraoPolygon = undefined;
+      this.pontosSelecionados = [];
+      this.circulos.forEach(circle => this.map.removeLayer(circle));
+      this.circulos = [];
+      this.quarteiraoPoligono = undefined;
     }
   }
 
   imprimePoligonos() {
-    this.quarteiroesPolygons.forEach(quarteirao => {
-      console.log(quarteirao.getLatLngs());
+    this.quarteiroes.forEach(quarteirao => {
+      console.log(quarteirao.poligono.getLatLngs());
+      console.log(quarteirao.poligono.getCenter())
     });
   }
 
-
   onMapReady($event: Leaflet.Map) {
     this.map = $event;
-    this.setupMapClickEvent();
+    this.configuracaoEventoClickMapa();
 
-    this.viewBounds = this.map.getBounds();
+    this.bordasMapa = this.map.getBounds();
 
     this.map.on('moveend', () => {
-      this.viewBounds = this.map.getBounds();
-      console.log('Novos limites da view box:', this.viewBounds);
+      this.bordasMapa = this.map.getBounds();
+      console.log('Novos limites da view box:', this.bordasMapa);
     });
 
-    if (this.mapActivated) {
-      this.map.fitBounds(this.viewBounds);
+    if (this.mapaAtivado) {
+      this.map.fitBounds(this.bordasMapa);
     }
 
   }
 
-  setupMapClickEvent() {
+  configuracaoEventoClickMapa() {
     this.map.on('click', (e) => {
       const latlng = e.latlng;
       console.log(`Clicou em: ${latlng.lat}, ${latlng.lng}`);
 
-      this.selectedPoints.push(latlng);
+      this.pontosSelecionados.push(latlng);
 
-      if (this.quarteiraoPolygon) {
-        this.map.removeLayer(this.quarteiraoPolygon);
+      if (this.quarteiraoPoligono) {
+        this.map.removeLayer(this.quarteiraoPoligono);
       }
 
       const circle = Leaflet.marker(latlng, {
@@ -109,45 +130,45 @@ export class AppComponent {
       });
 
       circle.on('drag', (event) => {
-        this.circleDragEnd(event);
+        this.circuloMovimentado(event);
       });
 
       circle.addTo(this.map);
 
-      this.circles.push(circle);
+      this.circulos.push(circle);
 
-      if (this.selectedPoints.length >= 3) {
-        const quarteiraoCoordinates: Leaflet.LatLngExpression[] = this.selectedPoints.map(point => Leaflet.latLng(point.lat, point.lng));
-        this.quarteiraoPolygon = Leaflet.polygon(quarteiraoCoordinates, { color: 'red' }).addTo(this.map);
+      if (this.pontosSelecionados.length >= 3) {
+        const quarteiraoCoordinates: Leaflet.LatLngExpression[] = this.pontosSelecionados.map(point => Leaflet.latLng(point.lat, point.lng));
+        this.quarteiraoPoligono = Leaflet.polygon(quarteiraoCoordinates, { color: 'red' }).addTo(this.map);
       }
     });
   }
 
-  circleDragEnd(event: Leaflet.LeafletEvent) {
-    this.selectedPoints = this.circles.map(circle => circle.getLatLng());
+  circuloMovimentado(event: Leaflet.LeafletEvent) {
+    this.pontosSelecionados = this.circulos.map(circle => circle.getLatLng());
 
-    if (this.quarteiraoPolygon) {
-      this.map.removeLayer(this.quarteiraoPolygon);
+    if (this.quarteiraoPoligono) {
+      this.map.removeLayer(this.quarteiraoPoligono);
     }
 
-    if (this.selectedPoints.length >= 3) {
-      const quarteiraoCoordinates: Leaflet.LatLngExpression[] = this.selectedPoints.map(point => Leaflet.latLng(point.lat, point.lng));
-      this.quarteiraoPolygon = Leaflet.polygon(quarteiraoCoordinates, { color: 'red' }).addTo(this.map);
+    if (this.pontosSelecionados.length >= 3) {
+      const quarteiraoCoordinates: Leaflet.LatLngExpression[] = this.pontosSelecionados.map(point => Leaflet.latLng(point.lat, point.lng));
+      this.quarteiraoPoligono = Leaflet.polygon(quarteiraoCoordinates, { color: 'red' }).addTo(this.map);
     }
   }
 
-  mapClicked($event: any) {
+  mapaClicado($event: any) {
     console.log($event.latlng.lat, $event.latlng.lng);
   }
 
-  markerClicked($event: any, index: number) {
+  marcarClicado($event: any, index: number) {
     console.log($event.latlng.lat, $event.latlng.lng);
   }
 
-  searchStreet() {
-    console.log('Pesquisando a rua:', this.searchQuery.replace(" ", "+"));
+  pesquisarRua() {
+    console.log('Pesquisando a rua:', this.enderecoPesquisa.replace(" ", "+"));
 
-    this.http.get<any>(`${this.nominatimURL}${this.searchQuery.replace(" ", "+")}`)
+    this.http.get<any>(`${this.nominatimURL}${this.enderecoPesquisa.replace(" ", "+")}`)
       .subscribe(data => {
         if (data && data.length > 0) {
           const result = data[0];
@@ -157,7 +178,7 @@ export class AppComponent {
             Leaflet.latLng(result.boundingbox[1], result.boundingbox[3])
           );
 
-          this.mapActivated = true;
+          this.mapaAtivado = true;
           if (this.map) {
             this.map.fitBounds(streetBounds);
           }

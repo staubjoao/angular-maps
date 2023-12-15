@@ -1,5 +1,12 @@
-<input type="text" placeholder="Pesquisar rua" [(ngModel)]="searchQuery" />
-<button (click)="searchStreet()">Pesquisar</button>
+<input
+  type="text"
+  placeholder="Pesquisar rua"
+  [(ngModel)]="enderecoPesquisa"
+  name="rua"
+/>
+<button (click)="pesquisarRua()">Pesquisar</button>
+<br />
+<input type="text" placeholder="Número" [(ngModel)]="numeroQuarteirao" />
 
 <div id="map">
   <div
@@ -7,10 +14,14 @@
     leaflet
     [leafletOptions]="options"
     (leafletMapReady)="onMapReady($event)"
-    (leafletClick)="mapClicked($event)"
+    (leafletClick)="mapaClicado($event)"
   ></div>
 </div>
 
-<button (click)="resetSelection()">Reiniciar Seleção</button>
-<button (click)="salvarSelecao()">Salvar</button>
-<button (click)="imprimePoligonos()">Teste</button>
+<div class="buttons-group">
+  <button (click)="limparSelecao()">Reiniciar Seleção</button>
+  <button (click)="salvarSelecao()">Salvar</button>
+  <button (click)="imprimePoligonos()">Teste</button>
+</div>
+
+<div><h1>teste</h1></div>
