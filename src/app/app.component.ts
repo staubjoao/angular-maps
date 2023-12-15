@@ -54,8 +54,6 @@ export class AppComponent {
     if (this.quarteiraoPoligono) {
       this.quarteiraoPoligono.setStyle({ color: 'green', fillColor: 'green' });
 
-
-
       const texto = Leaflet.marker(this.quarteiraoPoligono.getCenter(), {
         icon: Leaflet.divIcon({
           className: 'text-box',
