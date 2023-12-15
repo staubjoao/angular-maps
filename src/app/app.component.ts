@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import * as Leaflet from 'leaflet';
 import 'leaflet-control-geocoder';
+import 'leaflet-editable';
 
 @Component({
   selector: 'app-root',
@@ -13,6 +14,7 @@ export class AppComponent {
   selectedPoints: Leaflet.LatLng[] = [];
   circles: Leaflet.Marker[] = [];
   quarteiraoPolygon: Leaflet.Polygon | undefined;
+  quarteiroesPolygons: Leaflet.Polygon[] = [];
   searchControl!: any;
   searchQuery: string = '';
   viewBounds: Leaflet.LatLngBounds | undefined;
@@ -31,7 +33,7 @@ export class AppComponent {
     zoom: 16,
     maxZoom: 18,
     minZoom: 14,
-    // center: { lat: -23.410618, lng: -51.944181 }
+    center: { lat: -23.410618, lng: -51.944181 }
   };
 
   resetSelection() {
@@ -47,12 +49,27 @@ export class AppComponent {
 
   salvarSelecao() {
     if (this.quarteiraoPolygon) {
+      this.quarteiraoPolygon.setStyle({ color: 'green', fillColor: 'green' });
+      this.quarteiroesPolygons.push(this.quarteiraoPolygon);
+
       console.log(typeof (this.quarteiraoPolygon.getLatLngs()));
       this.quarteiraoPolygon.getLatLngs().forEach(ponto => {
         console.log(ponto.toString());
       });
+
+      this.selectedPoints = [];
+      this.circles.forEach(circle => this.map.removeLayer(circle));
+      this.circles = [];
+      this.quarteiraoPolygon = undefined;
     }
   }
+
+  imprimePoligonos() {
+    this.quarteiroesPolygons.forEach(quarteirao => {
+      console.log(quarteirao.getLatLngs());
+    });
+  }
+
 
   onMapReady($event: Leaflet.Map) {
     this.map = $event;
@@ -68,6 +85,7 @@ export class AppComponent {
     if (this.mapActivated) {
       this.map.fitBounds(this.viewBounds);
     }
+
   }
 
   setupMapClickEvent() {

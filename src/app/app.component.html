@@ -1,7 +1,7 @@
 <input type="text" placeholder="Pesquisar rua" [(ngModel)]="searchQuery" />
 <button (click)="searchStreet()">Pesquisar</button>
 
-<div id="map" style="height: 400px">
+<div id="map">
   <div
     class="map-container"
     leaflet
@@ -13,5 +13,4 @@
 
 <button (click)="resetSelection()">Reiniciar Seleção</button>
 <button (click)="salvarSelecao()">Salvar</button>
-
-<div class="circle"></div>
+<button (click)="imprimePoligonos()">Teste</button>

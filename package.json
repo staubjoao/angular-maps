@@ -21,6 +21,7 @@
     "@asymmetrik/ngx-leaflet": "^13.0.2",
     "leaflet": "^1.8.0",
     "leaflet-control-geocoder": "^2.4.0",
+    "leaflet-editable": "^1.2.0",
     "rxjs": "~7.5.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.11.4"
