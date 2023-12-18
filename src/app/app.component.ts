@@ -33,9 +33,9 @@ export class AppComponent {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
       })
     ],
-    zoom: 16,
+    zoom: 18,
     maxZoom: 18,
-    minZoom: 14,
+    minZoom: 16,
     center: { lat: -23.410618, lng: -51.944181 }
   };
 
@@ -44,6 +44,10 @@ export class AppComponent {
       this.map.removeLayer(this.quarteiraoPoligono);
     }
 
+    this.limparPoligono();
+  }
+
+  limparPoligono() {
     this.pontosSelecionados = [];
     this.circulos.forEach(circle => this.map.removeLayer(circle));
     this.circulos = [];
@@ -58,28 +62,29 @@ export class AppComponent {
         icon: Leaflet.divIcon({
           className: 'text-box',
           iconSize: [20, 20],
-          html: '<div><p>' + this.numeroQuarteirao + '</p></div>',
+          html: '<div style="width: 20px; height: 20px; border-radius: 50%; background-color: red; opacity: 0.5; text-align: center;"><div><p>' + this.numeroQuarteirao + '</p></div>',
         }),
-        draggable: true,
+        interactive: true,
       });
 
-      this.numeroQuarteirao = '';
+      texto.on('click', () => {
+        const quarteiraoClicado = this.quarteiroes.find(quarteirao => quarteirao.marcador === texto);
+        console.log(`Marcador clicado: ${quarteiraoClicado?.numero}`);
+      });
 
       texto.addTo(this.map);
 
       let quarteirao = new Quarteirao(Number(this.numeroQuarteirao), this.quarteiraoPoligono, texto);
-
       this.quarteiroes.push(quarteirao);
+
+      this.numeroQuarteirao = '';
 
       console.log(typeof (this.quarteiraoPoligono.getLatLngs()));
       this.quarteiraoPoligono.getLatLngs().forEach(ponto => {
         console.log(ponto.toString());
       });
 
-      this.pontosSelecionados = [];
-      this.circulos.forEach(circle => this.map.removeLayer(circle));
-      this.circulos = [];
-      this.quarteiraoPoligono = undefined;
+      this.limparPoligono();
     }
   }
 
@@ -101,10 +106,48 @@ export class AppComponent {
       console.log('Novos limites da view box:', this.bordasMapa);
     });
 
+    this.map.on('zoomend', () => {
+      const zoomLevel = this.map.getZoom();
+      this.atualizarVisibilidadeMarcadores(zoomLevel);
+    });
+
     if (this.mapaAtivado) {
       this.map.fitBounds(this.bordasMapa);
     }
+  }
 
+  atualizarVisibilidadeMarcadores(zoomLevel: number) {
+    const visivel = zoomLevel > 17;
+
+    this.circulos.forEach(circulo => {
+      if (visivel) {
+        this.map.addLayer(circulo);
+      } else {
+        this.map.removeLayer(circulo);
+      }
+    });
+
+    this.quarteiroes.forEach(quarteirao => {
+      if (quarteirao.marcador) {
+        if (visivel) {
+          this.map.addLayer(quarteirao.marcador);
+        } else {
+          this.map.removeLayer(quarteirao.marcador);
+        }
+      }
+    });
+  }
+
+  selecionarPoligono(quarteirao: Quarteirao) {
+    if (this.quarteiraoPoligono) {
+      this.quarteiraoPoligono.setStyle({ color: 'red' });
+    }
+
+    this.quarteiraoPoligono = quarteirao.poligono;
+
+    this.quarteiraoPoligono.setStyle({ color: 'blue' });
+
+    console.log('Polígono selecionado:', quarteirao.numero);
   }
 
   configuracaoEventoClickMapa() {
