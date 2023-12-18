@@ -68,8 +68,9 @@ export class AppComponent {
       });
 
       texto.on('click', () => {
-        const quarteiraoClicado = this.quarteiroes.find(quarteirao => quarteirao.marcador === texto);
-        console.log(`Marcador clicado: ${quarteiraoClicado?.numero}`);
+        const quarteiraoClicado: Quarteirao | undefined = this.quarteiroes.find(quarteirao => quarteirao.marcador === texto);
+        if(quarteiraoClicado)
+          this.selecionarPoligono(quarteiraoClicado);
       });
 
       texto.addTo(this.map);
@@ -140,14 +141,6 @@ export class AppComponent {
   }
 
   selecionarPoligono(quarteirao: Quarteirao) {
-    if (this.quarteiraoPoligono) {
-      this.quarteiraoPoligono.setStyle({ color: 'red' });
-    }
-
-    this.quarteiraoPoligono = quarteirao.poligono;
-
-    this.quarteiraoPoligono.setStyle({ color: 'blue' });
-
     console.log('Polígono selecionado:', quarteirao.numero);
   }
 
