@@ -91,7 +91,8 @@ export class AppComponent {
   imprimePoligonos() {
     this.quarteiroes.forEach(quarteirao => {
       console.log(quarteirao.poligono.getLatLngs());
-      console.log(quarteirao.poligono.getCenter())
+
+      console.log(quarteirao.poligono.toGeoJSON());
     });
   }
 
