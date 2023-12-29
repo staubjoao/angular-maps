@@ -1,25 +1,76 @@
-<input
-  type="text"
-  placeholder="Pesquisar rua"
-  [(ngModel)]="enderecoPesquisa"
-  name="rua"
-/>
-<button (click)="pesquisarRua()">Pesquisar</button>
-<br />
-<input type="text" placeholder="Número" [(ngModel)]="numeroQuarteirao" />
+<div class="container ml-5">
+  <div class="row">
+    <h1>Quarteirão</h1>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <div class="form-group">
+        <label>Número: </label>
+        <input
+          type="text"
+          class="form-control"
+          [(ngModel)]="numero"
+          name="nome"
+        />
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-10">
+      <label>Pesquisar rua:</label>
+      <div class="d-flex">
+        <input
+          type="text"
+          class="form-control"
+          [(ngModel)]="enderecoPesquisa"
+          name="ruaPesquisa"
+        />
+        <div class="d-flex ml-2 buttons-group">
+          <button
+            type="button"
+            class="btn btn-primary ml-2"
+            style="width: 120px"
+            (click)="pesquisarRua()"
+          >
+            <i class="fa fa-search"></i> Pesquisar
+          </button>
+          <button
+            type="button"
+            class="btn btn-warning ml-2"
+            style="width: 150px"
+            (click)="desfazerPonto()"
+          >
+            <i class="fa fa-undo" aria-hidden="true"></i>
+            Desfazer
+          </button>
+          <button
+            type="button"
+            class="btn btn-danger ml-2"
+            style="width: 150px"
+            (click)="limparSelecao()"
+          >
+            Limpar seleção
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-12">
+      <div id="map">
+        <div
+          class="map-container"
+          leaflet
+          [leafletOptions]="options"
+          (leafletMapReady)="onMapReady($event)"
+          (leafletClick)="mapaClicado($event)"
+        ></div>
+      </div>
+    </div>
+  </div>
 
-<div id="map">
-  <div
-    class="map-container"
-    leaflet
-    [leafletOptions]="options"
-    (leafletMapReady)="onMapReady($event)"
-    (leafletClick)="mapaClicado($event)"
-  ></div>
-</div>
-
-<div class="buttons-group">
-  <button (click)="limparSelecao()">Reiniciar Seleção</button>
-  <button (click)="salvarSelecao()">Salvar</button>
-  <button (click)="imprimePoligonos()">Teste</button>
+  <div class="buttons-group">
+    <button class="btn button-save" (click)="salvarSelecao()">
+      <i class="fa fa-save"></i> Salvar
+    </button>
+    <!-- <button (click)="imprimePoligonos()">Teste</button> -->
+  </div>
 </div>

@@ -9,9 +9,10 @@ import { Quarteirao } from './model/quarteirao';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.css'],
 })
 export class AppComponent {
+  numero: number | undefined;
   map!: Leaflet.Map;
   pontosSelecionados: Leaflet.LatLng[] = [];
   circulos: Leaflet.Marker[] = [];
@@ -22,21 +23,22 @@ export class AppComponent {
 
   bordasMapa: Leaflet.LatLngBounds | undefined;
   mapaAtivado: boolean = false;
-  nominatimURL: string = 'https://nominatim.openstreetmap.org/search?format=json&q=';
+  nominatimURL: string =
+    'https://nominatim.openstreetmap.org/search?format=json&q=';
 
-  constructor(private http: HttpClient) {
-  }
+  constructor(private http: HttpClient) {}
 
   options = {
     layers: [
       Leaflet.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-      })
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      }),
     ],
     zoom: 18,
     maxZoom: 18,
     minZoom: 16,
-    center: { lat: -23.410618, lng: -51.944181 }
+    // center: { lat: -23.410618, lng: -51.944181 },
   };
 
   limparSelecao() {
@@ -47,50 +49,95 @@ export class AppComponent {
     this.limparPoligono();
   }
 
+  desfazerPonto() {
+    console.log('teste');
+    this.pontosSelecionados.pop();
+    if (this.circulos.length > 0) {
+      let circulo: any = this.circulos.pop();
+      this.map.removeLayer(circulo);
+
+      this.desenhaPolignoQuarteirao();
+    }
+  }
+
+  desenhaPolignoQuarteirao() {
+    if (this.quarteiraoPoligono) {
+      this.map.removeLayer(this.quarteiraoPoligono);
+    }
+
+    if (this.pontosSelecionados.length >= 3) {
+      const quarteiraoCoordinates: Leaflet.LatLngExpression[] =
+        this.pontosSelecionados.map((point) =>
+          Leaflet.latLng(point.lat, point.lng)
+        );
+      this.quarteiraoPoligono = Leaflet.polygon(quarteiraoCoordinates, {
+        color: 'red',
+      }).addTo(this.map);
+    }
+  }
+
   limparPoligono() {
     this.pontosSelecionados = [];
-    this.circulos.forEach(circle => this.map.removeLayer(circle));
+    this.circulos.forEach((circle) => this.map.removeLayer(circle));
     this.circulos = [];
     this.quarteiraoPoligono = undefined;
   }
 
   salvarSelecao() {
-    if (this.quarteiraoPoligono) {
-      this.quarteiraoPoligono.setStyle({ color: 'green', fillColor: 'green' });
+    if (!this.quarteiraoPoligono) {
+      alert('Seleciona o quarterião!');
+      return;
+    }
 
-      const texto = Leaflet.marker(this.quarteiraoPoligono.getCenter(), {
+    if (!this.numero) {
+      alert('Digite o número do quarterião!');
+      return;
+    }
+
+    this.quarteiraoPoligono.setStyle({ color: 'green', fillColor: 'green' });
+
+    const texto = Leaflet.marker(
+      this.quarteiraoPoligono.getBounds().getCenter(),
+      {
         icon: Leaflet.divIcon({
           className: 'text-box',
-          iconSize: [20, 20],
-          html: '<div style="width: 20px; height: 20px; border-radius: 50%; background-color: red; opacity: 0.5; text-align: center;"><div><p>' + this.numeroQuarteirao + '</p></div>',
+          iconSize: [30, 30],
+          html: `<div style="width: 30px; height: 30px; border-radius: 50%; background-color: orange; opacity: 0.8; display: flex; justify-content: center; align-items: center;">
+              <div><p style="margin-top: 15px; font-size: 16px; color: white;">${this.numero}</p></div>
+            </div>`,
         }),
         interactive: true,
-      });
+      }
+    );
+    texto.on('click', () => {
+      const quarteiraoClicado = this.quarteiroes.find(
+        (q) => q.marcador === texto
+      );
+      console.log(`Marcador clicado: ${quarteiraoClicado?.numero}`);
+    });
 
-      texto.on('click', () => {
-        const quarteiraoClicado: Quarteirao | undefined = this.quarteiroes.find(quarteirao => quarteirao.marcador === texto);
-        if(quarteiraoClicado)
-          this.selecionarPoligono(quarteiraoClicado);
-      });
+    let quarteirao = new Quarteirao(
+      Number(this.numeroQuarteirao),
+      this.quarteiraoPoligono,
+      texto
+    );
 
-      texto.addTo(this.map);
+    texto.addTo(this.map);
 
-      let quarteirao = new Quarteirao(Number(this.numeroQuarteirao), this.quarteiraoPoligono, texto);
-      this.quarteiroes.push(quarteirao);
+    this.quarteiroes.push(quarteirao);
 
-      this.numeroQuarteirao = '';
+    this.numeroQuarteirao = '';
 
-      console.log(typeof (this.quarteiraoPoligono.getLatLngs()));
-      this.quarteiraoPoligono.getLatLngs().forEach(ponto => {
-        console.log(ponto.toString());
-      });
+    console.log(typeof this.quarteiraoPoligono.getLatLngs());
+    this.quarteiraoPoligono.getLatLngs().forEach((ponto) => {
+      console.log(ponto.toString());
+    });
 
-      this.limparPoligono();
-    }
+    this.limparPoligono();
   }
 
   imprimePoligonos() {
-    this.quarteiroes.forEach(quarteirao => {
+    this.quarteiroes.forEach((quarteirao) => {
       console.log(quarteirao.poligono.getLatLngs());
 
       console.log(quarteirao.poligono.toGeoJSON());
@@ -108,11 +155,6 @@ export class AppComponent {
       console.log('Novos limites da view box:', this.bordasMapa);
     });
 
-    this.map.on('zoomend', () => {
-      const zoomLevel = this.map.getZoom();
-      this.atualizarVisibilidadeMarcadores(zoomLevel);
-    });
-
     if (this.mapaAtivado) {
       this.map.fitBounds(this.bordasMapa);
     }
@@ -121,7 +163,7 @@ export class AppComponent {
   atualizarVisibilidadeMarcadores(zoomLevel: number) {
     const visivel = zoomLevel > 17;
 
-    this.circulos.forEach(circulo => {
+    this.circulos.forEach((circulo) => {
       if (visivel) {
         this.map.addLayer(circulo);
       } else {
@@ -129,7 +171,7 @@ export class AppComponent {
       }
     });
 
-    this.quarteiroes.forEach(quarteirao => {
+    this.quarteiroes.forEach((quarteirao) => {
       if (quarteirao.marcador) {
         if (visivel) {
           this.map.addLayer(quarteirao.marcador);
@@ -173,22 +215,32 @@ export class AppComponent {
       this.circulos.push(circle);
 
       if (this.pontosSelecionados.length >= 3) {
-        const quarteiraoCoordinates: Leaflet.LatLngExpression[] = this.pontosSelecionados.map(point => Leaflet.latLng(point.lat, point.lng));
-        this.quarteiraoPoligono = Leaflet.polygon(quarteiraoCoordinates, { color: 'red' }).addTo(this.map);
+        const quarteiraoCoordinates: Leaflet.LatLngExpression[] =
+          this.pontosSelecionados.map((point) =>
+            Leaflet.latLng(point.lat, point.lng)
+          );
+        this.quarteiraoPoligono = Leaflet.polygon(quarteiraoCoordinates, {
+          color: 'red',
+        }).addTo(this.map);
       }
     });
   }
 
   circuloMovimentado(event: Leaflet.LeafletEvent) {
-    this.pontosSelecionados = this.circulos.map(circle => circle.getLatLng());
+    this.pontosSelecionados = this.circulos.map((circle) => circle.getLatLng());
 
     if (this.quarteiraoPoligono) {
       this.map.removeLayer(this.quarteiraoPoligono);
     }
 
     if (this.pontosSelecionados.length >= 3) {
-      const quarteiraoCoordinates: Leaflet.LatLngExpression[] = this.pontosSelecionados.map(point => Leaflet.latLng(point.lat, point.lng));
-      this.quarteiraoPoligono = Leaflet.polygon(quarteiraoCoordinates, { color: 'red' }).addTo(this.map);
+      const quarteiraoCoordinates: Leaflet.LatLngExpression[] =
+        this.pontosSelecionados.map((point) =>
+          Leaflet.latLng(point.lat, point.lng)
+        );
+      this.quarteiraoPoligono = Leaflet.polygon(quarteiraoCoordinates, {
+        color: 'red',
+      }).addTo(this.map);
     }
   }
 
@@ -201,10 +253,13 @@ export class AppComponent {
   }
 
   pesquisarRua() {
-    console.log('Pesquisando a rua:', this.enderecoPesquisa.replace(" ", "+"));
+    const enderecoBusca = this.enderecoPesquisa
+      .toLowerCase()
+      .replace(/ /g, '+');
+    console.log('Pesquisando a rua:', enderecoBusca);
 
-    this.http.get<any>(`${this.nominatimURL}${this.enderecoPesquisa.replace(" ", "+")}`)
-      .subscribe(data => {
+    this.http.get<any>(`${this.nominatimURL}${enderecoBusca}`).subscribe(
+      (data) => {
         if (data && data.length > 0) {
           const result = data[0];
 
@@ -217,11 +272,18 @@ export class AppComponent {
           if (this.map) {
             this.map.fitBounds(streetBounds);
           }
+
+          this.map.on('zoomend', () => {
+            const zoomLevel = this.map.getZoom();
+            this.atualizarVisibilidadeMarcadores(zoomLevel);
+          });
         } else {
           console.warn('Nenhum resultado encontrado.');
         }
-      }, error => {
+      },
+      (error) => {
         console.error('Erro ao realizar a busca:', error);
-      });
+      }
+    );
   }
 }
